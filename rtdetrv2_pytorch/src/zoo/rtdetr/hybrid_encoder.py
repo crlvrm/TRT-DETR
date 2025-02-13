@@ -12,6 +12,7 @@ from .utils import get_activation
 
 from ...core import register
 
+from .SFE import FEM, CCM
 
 __all__ = ['HybridEncoder']
 
@@ -198,7 +199,8 @@ class HybridEncoder(nn.Module):
                  depth_mult=1.0,
                  act='silu',
                  eval_spatial_size=None, 
-                 version='v2'):
+                 version='v2',
+                 sfe_channel=64):
         super().__init__()
         self.in_channels = in_channels
         self.feat_strides = feat_strides
@@ -209,6 +211,10 @@ class HybridEncoder(nn.Module):
         self.eval_spatial_size = eval_spatial_size        
         self.out_channels = [hidden_dim for _ in range(len(in_channels))]
         self.out_strides = feat_strides
+
+        self.sfe_channel = sfe_channel
+        self.ccm = CCM(self.sfe_channel)
+        self.fem = FEM(gate_channels=self.hidden_dim, reduction_ratio=16)
         
         # channel projection
         self.input_proj = nn.ModuleList()
@@ -289,7 +295,13 @@ class HybridEncoder(nn.Module):
 
         return torch.concat([out_w.sin(), out_w.cos(), out_h.sin(), out_h.cos()], dim=1)[None, :, :]
 
-    def forward(self, feats):
+    def forward(self, all_feats):
+        if isinstance(all_feats, list):
+            feats = all_feats[0]
+            sfe_feat = all_feats[1]
+        else:
+            feats = all_feats
+            sfe_feat = None
         assert len(feats) == len(self.in_channels)
         proj_feats = [self.input_proj[i](feat) for i, feat in enumerate(feats)]
         
@@ -327,4 +339,7 @@ class HybridEncoder(nn.Module):
             out = self.pan_blocks[idx](torch.concat([downsample_feat, feat_height], dim=1))
             outs.append(out)
 
-        return outs
+        sfe_feats = self.ccm(sfe_feat)
+        fe_outs = self.fem(sfe_feats, outs)
+
+        return fe_outs
