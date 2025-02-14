@@ -185,6 +185,7 @@ mscoco_category2name = {
     7: 'motor',
     8: 'traffic light',
     9: 'traffic sign',
+    10: 'train'
 }
 
 mscoco_category2label = {k: i for i, k in enumerate(mscoco_category2name.keys())}
