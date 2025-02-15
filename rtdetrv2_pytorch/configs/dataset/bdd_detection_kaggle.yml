@@ -10,7 +10,7 @@ evaluator:
 # num_classes: 91
 # remap_mscoco_category: False
 
-num_classes: 10
+num_classes: 9
 remap_mscoco_category: True
 
 
@@ -19,7 +19,7 @@ train_dataloader:
   dataset: 
     type: CocoDetection
     img_folder: /kaggle/input/bdd-dataset/dataset/images/train/
-    ann_file: /kaggle/input/bdd-dataset/dataset/labels_coco/bdd100k_labels_images_det_coco_train.json
+    ann_file: /kaggle/input/labels-coco-notrain/labels_coco_notrain2/bdd100k_labels_images_det_coco_train.json
     return_masks: False
     transforms:
       type: Compose
@@ -36,7 +36,7 @@ val_dataloader:
   dataset: 
     type: CocoDetection
     img_folder: /kaggle/input/bdd-dataset/dataset/images/val/
-    ann_file: /kaggle/input/bdd-dataset/dataset/labels_coco/bdd100k_labels_images_det_coco_val.json
+    ann_file: /kaggle/input/labels-coco-notrain/labels_coco_notrain2/bdd100k_labels_images_det_coco_val.json
     return_masks: False
     transforms:
       type: Compose
