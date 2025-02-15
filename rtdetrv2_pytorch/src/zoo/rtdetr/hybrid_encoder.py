@@ -213,8 +213,8 @@ class HybridEncoder(nn.Module):
         self.out_strides = feat_strides
 
         self.sfe_channel = sfe_channel
-        self.ccm = CCM(self.sfe_channel)
-        self.fem = FEM(gate_channels=self.hidden_dim, reduction_ratio=16)
+        # self.ccm = CCM(self.sfe_channel)
+        # self.fem = FEM(gate_channels=self.hidden_dim, reduction_ratio=16)
         
         # channel projection
         self.input_proj = nn.ModuleList()
