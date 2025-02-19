@@ -212,9 +212,9 @@ class HybridEncoder(nn.Module):
         self.out_channels = [hidden_dim for _ in range(len(in_channels))]
         self.out_strides = feat_strides
 
-        self.sfe_channel = sfe_channel
-        self.ccm = CCM(self.sfe_channel)
-        self.fem = FEM(gate_channels=self.hidden_dim, reduction_ratio=16)
+        # self.sfe_channel = sfe_channel
+        # self.ccm = CCM(self.sfe_channel)
+        # self.fem = FEM(gate_channels=self.hidden_dim, reduction_ratio=16)
         
         # channel projection
         self.input_proj = nn.ModuleList()
@@ -339,7 +339,7 @@ class HybridEncoder(nn.Module):
             out = self.pan_blocks[idx](torch.concat([downsample_feat, feat_height], dim=1))
             outs.append(out)
 
-        sfe_feats = self.ccm(sfe_feat)
-        fe_outs = self.fem(sfe_feats, outs)
+        # sfe_feats = self.ccm(sfe_feat)
+        # fe_outs = self.fem(sfe_feats, outs)
 
-        return fe_outs
+        return outs
