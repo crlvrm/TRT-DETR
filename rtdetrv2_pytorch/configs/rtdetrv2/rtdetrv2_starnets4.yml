@@ -30,6 +30,9 @@ HybridEncoder:
 
 RTDETRTransformerv2:
   num_layers: 3
+  feat_channels: [128, 128, 128]
+  feat_strides: [8, 16, 32]
+  hidden_dim: 128
 
 
 epoches: 24
