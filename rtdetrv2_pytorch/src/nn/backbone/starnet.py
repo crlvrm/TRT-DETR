@@ -176,7 +176,7 @@ class StarNet(nn.Module):
             self.attns.append(EMA(ch_out_list[i_layer]))
             cur += block_nums[i_layer]
             ch_in = _out_channels[i_layer]
-            self.upchannel.append(ConvBN(_out_channels[i_layer], 2 * _out_channels[i_layer], 1, 1, 0))
+
 
         self.return_idx = return_idx
         self.out_channels = [_out_channels[_i] for _i in return_idx]
@@ -228,9 +228,8 @@ class StarNet(nn.Module):
         for idx, stage in enumerate(self.stages):
             x = stage(x)
             x = self.attns[idx](x)
-            feat = self.upchannel[idx](x)
             if idx == 0:
-                fe_feat = feat
+                fe_feat = x
             if idx in self.return_idx:
-                outs.append(feat)
+                outs.append(x)
         return [outs, fe_feat]
