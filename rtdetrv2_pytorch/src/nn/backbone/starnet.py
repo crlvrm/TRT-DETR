@@ -165,6 +165,7 @@ class StarNet(nn.Module):
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(block_nums))]  # stochastic depth
         cur = 0
         self.attns = nn.ModuleList()
+        self.upchannel = nn.ModuleList()
         for i_layer in range(len(block_nums)):
 
             down_sampler = ConvBN(ch_in, ch_out_list[i_layer], 3, 2, 1)
@@ -175,6 +176,7 @@ class StarNet(nn.Module):
             self.attns.append(EMA(ch_out_list[i_layer]))
             cur += block_nums[i_layer]
             ch_in = _out_channels[i_layer]
+            self.upchannel.append(ConvBN(_out_channels[i_layer], 2 * _out_channels[i_layer], 1, 1, 0))
 
         self.return_idx = return_idx
         self.out_channels = [_out_channels[_i] for _i in return_idx]
@@ -227,7 +229,7 @@ class StarNet(nn.Module):
             x = stage(x)
             x = self.attns[idx](x)
             if idx == 0:
-                fe_feat = x
+                fe_feat = self.upchannel[idx](x)
             if idx in self.return_idx:
-                outs.append(x)
+                outs.append(self.upchannel[idx](x))
         return [outs, fe_feat]

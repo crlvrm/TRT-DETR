@@ -22,17 +22,14 @@ StarNet:
 
 
 HybridEncoder:
-  in_channels: [64, 128, 256]
-  hidden_dim: 128
-#  expansion: 0.5
+  in_channels: [128, 256, 512]
+  hidden_dim: 256
+  expansion: 0.5
   sfe_channel: 64
 
 
 RTDETRTransformerv2:
   num_layers: 3
-  feat_channels: [128, 128, 128]
-  feat_strides: [8, 16, 32]
-  hidden_dim: 128
 
 
 epoches: 24
