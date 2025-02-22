@@ -228,8 +228,9 @@ class StarNet(nn.Module):
         for idx, stage in enumerate(self.stages):
             x = stage(x)
             x = self.attns[idx](x)
+            feat = self.upchannel[idx](x)
             if idx == 0:
-                fe_feat = self.upchannel[idx](x)
+                fe_feat = feat
             if idx in self.return_idx:
-                outs.append(self.upchannel[idx](x))
+                outs.append(feat)
         return [outs, fe_feat]
