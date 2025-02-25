@@ -195,8 +195,10 @@ class StarNet(nn.Module):
                 state = torch.hub.load_state_dict_from_url(model_urls[name], map_location='cpu')['state_dict']
             # else:
             #     state = torch.load(pretrained, map_location='cpu')
-                self.load_state_dict(state, strict=False)
+                incompatible = self.load_state_dict(state, strict=False)
                 print(f'Load StarNet{name} state_dict')
+                print(f"Missing Keys: {incompatible.missing_keys}")
+                print(f"Unexpected Keys: {incompatible.unexpected_keys}")
 
     def _freeze_parameters(self, m: nn.Module):
         for p in m.parameters():
