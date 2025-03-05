@@ -61,6 +61,7 @@ class Block(nn.Module):
         self.g = ConvBN(mlp_ratio * dim, dim, 1, with_bn=True)
         self.dwconv2 = ConvBN(dim, dim, 7, 1, (7 - 1) // 2, groups=dim, with_bn=False)
         self.act = nn.ReLU6()
+        self.attention = EMA(dim)
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
 
     def forward(self, x):
@@ -69,6 +70,7 @@ class Block(nn.Module):
         x1, x2 = self.f1(x), self.f2(x)
         x = self.act(x1) * x2
         x = self.dwconv2(self.g(x))
+        x = self.attention(self.act(x))
         x = input + self.drop_path(x)
         return x
 class ConvNormLayer(nn.Module):
