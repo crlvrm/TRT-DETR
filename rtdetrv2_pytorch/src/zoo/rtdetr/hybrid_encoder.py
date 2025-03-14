@@ -34,6 +34,71 @@ class ConvNormLayer(nn.Module):
     def forward(self, x):
         return self.act(self.norm(self.conv(x)))
 
+class IlluminationAwareModule(nn.Module):
+    def __init__(self, channels, init_gamma=0.6):
+        super().__init__()
+        # 光照感知参数
+        self.gamma = nn.Parameter(torch.tensor(init_gamma, dtype=torch.float32))
+        self.beta = nn.Parameter(torch.tensor(0.4, dtype=torch.float32))
+
+        # 多尺度亮度估计
+        self.brightness_net = nn.Sequential(
+            nn.Conv2d(channels, channels // 2, 3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(channels // 2, 2, 3, padding=1)  # 输出均值和方差
+        )
+
+        # 动态调节网络
+        self.adaptive_gamma = nn.Sequential(
+            nn.Conv2d(2, 16, 1),
+            nn.ReLU(),
+            nn.Conv2d(16, 1, 1),
+            nn.Sigmoid()
+        )
+
+        # 增强型注意力
+        self.spatial_att = nn.Sequential(
+            nn.Conv2d(2, 1, 3, padding=1),
+            nn.Sigmoid()
+        )
+        self.channel_att = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(channels, channels // 8, 1),
+            nn.ReLU(),
+            nn.Conv2d(channels // 8, channels, 1),
+            nn.Sigmoid()
+        )
+
+        self.conv_out = nn.Conv2d(channels * 2, channels, 1)
+
+    def forward(self, x):
+        # 多维度光照估计
+        illumination = self.brightness_net(x)
+        mean, var = torch.chunk(torch.sigmoid(illumination), 2, dim=1)
+
+
+        # 动态参数生成
+        gamma_factor = self.adaptive_gamma(torch.cat([mean, var], dim=1))
+
+
+        # 增强
+        enhanced = torch.pow(x, gamma_factor + 0.5)
+
+
+        # 空间注意力
+        spatial_att = self.spatial_att(torch.cat([
+            torch.max(enhanced, dim=1, keepdim=True)[0],
+            torch.mean(enhanced, dim=1, keepdim=True)
+        ], dim=1))
+
+        # 通道注意力
+        channel_att = self.channel_att(enhanced)
+
+        # 协同注意力
+        refined = enhanced * spatial_att * channel_att
+
+        # 残差学习
+        return self.conv_out(torch.cat([x, refined], dim=1))
 
 class RepVggBlock(nn.Module):
     def __init__(self, ch_in, ch_out, act='relu'):
@@ -218,6 +283,7 @@ class HybridEncoder(nn.Module):
         
         # channel projection
         self.input_proj = nn.ModuleList()
+        self.IAM = nn.ModuleList()
         for in_channel in in_channels:
             if version == 'v1':
                 proj = nn.Sequential(
@@ -230,7 +296,7 @@ class HybridEncoder(nn.Module):
                 ]))
             else:
                 raise AttributeError()
-                
+            self.IAM.append(IlluminationAwareModule(in_channel))
             self.input_proj.append(proj)
 
         # encoder transformer
@@ -303,7 +369,9 @@ class HybridEncoder(nn.Module):
             feats = all_feats
             sfe_feat = None
         assert len(feats) == len(self.in_channels)
-        proj_feats = [self.input_proj[i](feat) for i, feat in enumerate(feats)]
+        iam_feats = [self.IAM[i](feat) for i, feat in enumerate(feats)]
+        proj_feats = [self.input_proj[i](feat) for i, feat in enumerate(iam_feats)]
+        # proj_feats = [self.input_proj[i](feat) for i, feat in enumerate(feats)]
         
         # encoder
         if self.num_encoder_layers > 0:
