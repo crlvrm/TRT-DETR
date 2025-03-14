@@ -38,8 +38,8 @@ class IlluminationAwareModule(nn.Module):
     def __init__(self, channels, init_gamma=0.6):
         super().__init__()
         # 光照感知参数
-        self.gamma = nn.Parameter(torch.tensor(init_gamma, dtype=torch.float32))
-        self.beta = nn.Parameter(torch.tensor(0.4, dtype=torch.float32))
+        # self.gamma = nn.Parameter(torch.tensor(init_gamma, dtype=torch.float32))
+        # self.beta = nn.Parameter(torch.tensor(0.4, dtype=torch.float32))
 
         # 多尺度亮度估计
         self.brightness_net = nn.Sequential(
